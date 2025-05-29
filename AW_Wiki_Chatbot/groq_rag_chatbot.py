@@ -3,7 +3,6 @@ import warnings
 import logging
 import streamlit as st
 
-from dotenv import load_dotenv
 from langdetect import detect
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
@@ -19,12 +18,8 @@ os.environ["STREAMLIT_WATCHER_TYPE"] = "none"
 warnings.filterwarnings("ignore")
 logging.getLogger("transformers").setLevel(logging.ERROR)
 
-# Load API key securely (for Streamlit Cloud use st.secrets)
-# For local testing, uncomment the below:
-# load_dotenv()
-# GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-
-GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
+# ✅ HARDCODED API KEY (your choice)
+GROQ_API_KEY = "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"
 
 # Streamlit UI setup
 st.set_page_config(page_title="RegioWizard KI", layout="centered")
@@ -51,7 +46,9 @@ def detect_language(text):
 # Cached vectorstore creation
 @st.cache_resource
 def get_vectorstore():
-    pdf_path = "bad_breisig_docs.pdf"  # Ensure this file is committed to your GitHub repo
+    pdf_path = os.path.join(os.path.dirname(__file__), "bad_breisig_docs.pdf")
+    if not os.path.exists(pdf_path):
+        raise FileNotFoundError(f"PDF not found at: {pdf_path}")
     loaders = [PyPDFLoader(pdf_path)]
     return VectorstoreIndexCreator(
         embedding=HuggingFaceEmbeddings(model_name='all-MiniLM-L12-v2'),
@@ -116,7 +113,7 @@ Answer:
                 """
             )
 
-            # Create RetrievalQA chain
+            # Retrieval QA chain
             chain = RetrievalQA.from_chain_type(
                 llm=groq_chat,
                 chain_type='stuff',
@@ -128,7 +125,7 @@ Answer:
             result = chain({"query": prompt})
             response = result["result"].strip()
 
-            # Fallback if vague or missing
+            # Fallback if vague
             if not response or "not found" in response.lower() or "nicht im kontext" in response.lower():
                 fallback_docs = vectorstore.similarity_search_with_score(prompt, k=3)
                 keyword_hits = list({doc.page_content.strip()[:300] for doc, _ in fallback_docs})
