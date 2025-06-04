@@ -19,7 +19,8 @@ warnings.filterwarnings("ignore")
 logging.getLogger("transformers").setLevel(logging.ERROR)
 
 # ✅ HARDCODED API KEY (your choice)
-GROQ_API_KEY = "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"
+#GROQ_API_KEY = "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"
+GROQ_API_KEY = "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"
 
 # Streamlit UI setup
 st.set_page_config(page_title="RegioWizard KI", layout="centered")
